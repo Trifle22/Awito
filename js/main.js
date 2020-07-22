@@ -11,6 +11,8 @@ const modalItem = document.querySelector('.modal__item');
 const elementsModalSubmit = [...modalSubmit.elements].filter(elem => elem.tagName !== 'BUTTON');
 const modalBtnWarning = document.querySelector('.modal__btn-warning');
 
+const saveDB = () => localStorage.setItem('awito', JSON.stringify(dataBase));
+
 
 const checkForm = () => {
     const validForm = elementsModalSubmit.every(elem => elem.value);
@@ -38,7 +40,8 @@ modalSubmit.addEventListener('submit', event => {
         itemObj[elem.name] = elem.value;
     }
     dataBase.push(itemObj);
-    closeModal();
+    closeModal({ target: modalAdd });
+    saveDB();
 });
 
 addAd.addEventListener('click', () => {
