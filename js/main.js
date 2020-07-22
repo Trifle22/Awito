@@ -1,6 +1,6 @@
 'use strict';
 
-const dataBase = [];
+const dataBase = JSON.parse(localStorage.getItem('awito')) || [];
 
 const modalAdd = document.querySelector('.modal__add');
 const addAd = document.querySelector('.add__ad');
@@ -10,7 +10,14 @@ const catalog = document.querySelector('.catalog');
 const modalItem = document.querySelector('.modal__item');
 const elementsModalSubmit = [...modalSubmit.elements].filter(elem => elem.tagName !== 'BUTTON');
 const modalBtnWarning = document.querySelector('.modal__btn-warning');
+const modalFileInput = document.querySelector('.modal__file-input');
+const modalFileBtn = document.querySelector('.modal__file-btn');
+const modalImageAdd = document.querySelector('.modal__image-add');
 
+const textFileBtn = modalFileBtn.textContent;
+const srcModalImage = modalImageAdd.src;
+
+const infoPhoto = {};
 const saveDB = () => localStorage.setItem('awito', JSON.stringify(dataBase));
 
 
@@ -27,11 +34,50 @@ const closeModal = function(event) {
         modalItem.classList.add('hide');
         document.removeEventListener('keydown', closeModal);
         modalSubmit.reset();
+        modalImageAdd.src = srcModalImage;
+        modalFileBtn.textContent = textFileBtn;
         checkForm();
+
     };
 };
 
+const renderCard = () => {
+    catalog.textContent = '';
+    dataBase.forEach((item, i) => {
+        catalog.insertAdjacentHTML('beforeend', `
+        <li class="card" data-id="${i}">
+          <img class="card__image" src="data:image/jpeg;base64,${item.image}" alt="test">
+          <div class="card__description">
+            <h3 class="card__header">${item.nameItem}</h3>
+            <div class="card__price">${item.costItem} ₽</div>
+          </div>
+        </li>
+    `)
+    });
+};
+
 modalSubmit.addEventListener('input', checkForm);
+
+modalFileInput.addEventListener('change', event => {
+    const target = event.target;
+    const reader = new FileReader();
+    const file = target.files[0];
+    infoPhoto.filename = file.name;
+    infoPhoto.size = file.size;
+    reader.readAsBinaryString(file);
+    reader.addEventListener('load', event => {
+        if (infoPhoto.size < 200000) {
+            modalFileBtn.textContent = infoPhoto.filename;
+            infoPhoto.base64 = btoa(event.target.result);
+            modalImageAdd.src = `data:image/jpeg;base64,${infoPhoto.base64}`
+        } else {
+            modalFileBtn.textContent = 'Размер файла не должен превышать 200кб';
+            modalFileInput.value = '';
+            checkForm();
+        }
+    });
+
+});
 
 modalSubmit.addEventListener('submit', event => {
     event.preventDefault();
@@ -39,9 +85,11 @@ modalSubmit.addEventListener('submit', event => {
     for (const elem of elementsModalSubmit) {
         itemObj[elem.name] = elem.value;
     }
+    itemObj.image = infoPhoto.base64;
     dataBase.push(itemObj);
     closeModal({ target: modalAdd });
     saveDB();
+    renderCard();
 });
 
 addAd.addEventListener('click', () => {
@@ -60,3 +108,5 @@ catalog.addEventListener('click', event => {
         document.addEventListener('keydown', closeModal);
     };
 });
+
+renderCard();
